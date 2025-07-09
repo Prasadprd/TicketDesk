@@ -1,0 +1,29 @@
+{
+  "name": "ticketdesk",
+  "version": "1.0.0",
+  "description": "Issue and Project Tracking System",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "server": "nodemon server/index.js",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-server": "cd server && npm install",
+    "install-client": "cd client && npm install",
+    "install": "npm run install-server && npm run install-client",
+    "seed": "cd server && npm run seed"
+  },
+  "keywords": [
+    "ticket",
+    "project",
+    "management",
+    "issue",
+    "tracking"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "nodemon": "^3.0.1"
+  }
+}

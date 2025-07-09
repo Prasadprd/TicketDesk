@@ -1,0 +1,43 @@
+{
+  "name": "ticketdesk-server",
+  "version": "1.0.0",
+  "description": "TicketDesk API Server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest --watchAll --verbose",
+    "seed": "node ./utils/seeder.js",
+    "seed:destroy": "node ./utils/seeder.js -d"
+  },
+  "keywords": [
+    "api",
+    "server",
+    "express",
+    "mongodb",
+    "ticket",
+    "project",
+    "management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "colors": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-async-handler": "^1.2.0",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.1",
+    "mongoose": "^7.4.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.4"
+  },
+  "devDependencies": {
+    "jest": "^29.6.2",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3"
+  }
+}
