@@ -555,9 +555,9 @@ module.exports = {
   deleteProject,
   addProjectMember,
   removeProjectMember,
-  updateProjectMemberRole,
+  updateMemberRole: updateProjectMemberRole,
   getProjectActivity,
-  updateProjectTicketTypes,
-  updateProjectTicketStatuses,
-  updateProjectTicketPriorities,
+  updateTicketTypes: updateProjectTicketTypes,
+  updateTicketStatuses: updateProjectTicketStatuses,
+  updateTicketPriorities: updateProjectTicketPriorities,
 };

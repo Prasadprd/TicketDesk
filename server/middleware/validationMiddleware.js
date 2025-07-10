@@ -1,4 +1,4 @@
-const { validationResult } = require('express-async-handler');
+const { validationResult } = require('express-validator');
 
 /**
  * Middleware to validate request data
