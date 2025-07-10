@@ -13,7 +13,7 @@ const ticketSchema = mongoose.Schema(
     },
     ticketNumber: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
     },
     project: {
@@ -147,12 +147,13 @@ ticketSchema.pre('save', async function (next) {
       if (!project) {
         return next(new Error('Project not found'));
       }
-
+      // console.log("Inside the ticketMOdel")
       // Get the count of tickets for this project
       const count = await mongoose.model('Ticket').countDocuments({ project: this.project });
 
       // Generate ticket number (e.g., PRJ-123)
       this.ticketNumber = `${project.key}-${count + 1}`;
+      console.log("Ticket number generated:", this.ticketNumber);
 
       // Add creation to history
       this.history.push({

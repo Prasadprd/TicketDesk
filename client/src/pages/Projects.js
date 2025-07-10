@@ -27,6 +27,7 @@ import {
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -54,6 +55,19 @@ const Projects = () => {
       setLoading(false);
     };
     fetchProjects();
+  }, []);
+
+  // Fetch teams for dropdown
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const res = await api.get('/teams');
+        setTeams(res.data);
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchTeams();
   }, []);
 
   // Handle form input
@@ -194,12 +208,15 @@ const Projects = () => {
                   />
                 </FormControl>
                 <FormControl mb={2}>
-                  <FormLabel>Team (ID)</FormLabel>
-                  <Input
-                    name="team"
-                    value={form.team}
-                    onChange={handleChange}
-                  />
+                  <FormLabel>Team</FormLabel>
+                  <Select name="team" value={form.team} onChange={handleChange}>
+                    <option value="">Select a team</option>
+                    {teams.map((team) => (
+                      <option key={team._id} value={team._id}>
+                        {team.name}
+                      </option>
+                    ))}
+                  </Select>
                 </FormControl>
                 <FormControl mb={2}>
                   <FormLabel>Category</FormLabel>

@@ -27,6 +27,7 @@ const createTicket = asyncHandler(async (req, res) => {
 
   // Check if project exists
   const projectExists = await Project.findById(project);
+  console.log(projectExists.ticketTypes)
 
   if (!projectExists) {
     res.status(404);
@@ -40,17 +41,21 @@ const createTicket = asyncHandler(async (req, res) => {
   }
 
   // Validate ticket type, status, and priority against project settings
-  if (!projectExists.ticketTypes.includes(type)) {
+  const isValidType = projectExists.ticketTypes.some(tt => tt.name === type);
+  console.log("Ticket is valid?",isValidType)
+  if (!isValidType) {
     res.status(400);
     throw new Error(`Invalid ticket type. Valid types are: ${projectExists.ticketTypes.join(', ')}`);
   }
 
-  if (!projectExists.ticketStatuses.includes(status)) {
+  const isValidStatus = projectExists.ticketStatuses.some(ts => ts.name === status);
+  if (!isValidStatus) {
     res.status(400);
     throw new Error(`Invalid ticket status. Valid statuses are: ${projectExists.ticketStatuses.join(', ')}`);
   }
 
-  if (!projectExists.ticketPriorities.includes(priority)) {
+  const isValidPriority = projectExists.ticketPriorities.some(tp => tp.name === priority);
+  if (!isValidPriority) {
     res.status(400);
     throw new Error(`Invalid ticket priority. Valid priorities are: ${projectExists.ticketPriorities.join(', ')}`);
   }

@@ -8,6 +8,11 @@ const Tickets = () => {
   const [error, setError] = useState(null);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [form, setForm] = useState({ title: '', description: '', project: '', type: '', priority: '', status: '' });
+  const [projects, setProjects] = useState([]);
+  const [projectOptions, setProjectOptions] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [priorityOptions, setPriorityOptions] = useState([]);
+  const [typeOptions, setTypeOptions] = useState([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
@@ -26,12 +31,39 @@ const Tickets = () => {
     fetchTickets();
   }, []);
 
+  // Fetch projects and their ticket options for dropdowns
+  useEffect(() => {
+    const fetchProjectsAndOptions = async () => {
+      try {
+        const res = await api.get('/projects');
+        setProjects(res.data.tickets || res.data);
+        setProjectOptions(res.data);
+        // Use the first project for default options
+        if (res.data.length > 0) {
+          const project = res.data[0];
+          setStatusOptions(project.ticketStatuses || []);
+          setPriorityOptions(project.ticketPriorities || []);
+          setTypeOptions(project.ticketTypes || []);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchProjectsAndOptions();
+  }, []);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleCreate = async () => {
+    // Validate required fields
+    if (!form.title || !form.description || !form.project || !form.status || !form.priority || !form.type) {
+      toast({ title: 'Please fill all fields', status: 'error' });
+      return;
+    }
     try {
+      console.log('Submitting ticket:', form);
       await api.post('/tickets', form);
       toast({ title: 'Ticket created', status: 'success' });
       onClose();
@@ -107,20 +139,47 @@ const Tickets = () => {
                   <Input name="description" value={form.description} onChange={handleChange} />
                 </FormControl>
                 <FormControl mb={2}>
-                  <FormLabel>Project (ID)</FormLabel>
-                  <Input name="project" value={form.project} onChange={handleChange} />
+                  <FormLabel>Project</FormLabel>
+                  <Select name="project" value={form.project} onChange={e => {
+                    handleChange(e);
+                    // Update status/priority/type options when project changes
+                    const selected = projectOptions.find(p => p._id === e.target.value);
+                    setStatusOptions(selected?.ticketStatuses || []);
+                    setPriorityOptions(selected?.ticketPriorities || []);
+                    setTypeOptions(selected?.ticketTypes || []);
+                  }}>
+                    <option value="">Select a project</option>
+                    {projectOptions.map(project => (
+                      <option key={project._id} value={project._id}>{project.name}</option>
+                    ))}
+                  </Select>
                 </FormControl>
                 <FormControl mb={2}>
                   <FormLabel>Status</FormLabel>
-                  <Input name="status" value={form.status} onChange={handleChange} />
+                  <Select name="status" value={form.status} onChange={handleChange}>
+                    <option value="">Select status</option>
+                    {statusOptions.map(opt => (
+                      <option key={opt.name} value={opt.name}>{opt.name}</option>
+                    ))}
+                  </Select>
                 </FormControl>
                 <FormControl mb={2}>
                   <FormLabel>Priority</FormLabel>
-                  <Input name="priority" value={form.priority} onChange={handleChange} />
+                  <Select name="priority" value={form.priority} onChange={handleChange}>
+                    <option value="">Select priority</option>
+                    {priorityOptions.map(opt => (
+                      <option key={opt.name} value={opt.name}>{opt.name}</option>
+                    ))}
+                  </Select>
                 </FormControl>
                 <FormControl mb={2}>
                   <FormLabel>Type</FormLabel>
-                  <Input name="type" value={form.type} onChange={handleChange} />
+                  <Select name="type" value={form.type} onChange={handleChange}>
+                    <option value="">Select type</option>
+                    {typeOptions.map(opt => (
+                      <option key={opt.name} value={opt.name}>{opt.name}</option>
+                    ))}
+                  </Select>
                 </FormControl>
               </form>
             )}
