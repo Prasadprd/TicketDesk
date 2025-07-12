@@ -1,0 +1,127 @@
+.dashboard-container {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--chakra-colors-gray-800);
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+  color: var(--chakra-colors-gray-600);
+  font-size: 1rem;
+}
+
+.stats-grid {
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: var(--chakra-colors-blue-50);
+  color: var(--chakra-colors-blue-500);
+  margin-right: 1rem;
+}
+
+.stat-title {
+  font-size: 0.875rem;
+  color: var(--chakra-colors-gray-600);
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--chakra-colors-gray-800);
+}
+
+.chart-section {
+  margin-bottom: 2.5rem;
+}
+
+.chart-header {
+  margin-bottom: 1.5rem;
+}
+
+.chart-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--chakra-colors-gray-700);
+}
+
+.chart-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 100%;
+}
+
+.chart-container {
+  height: 220px;
+  position: relative;
+}
+
+.bar-chart-container {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  .chart-container {
+    height: 180px;
+  }
+  
+  .bar-chart-container {
+    height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-title {
+    font-size: 1.5rem;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
+  }
+}

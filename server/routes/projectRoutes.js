@@ -13,6 +13,8 @@ const {
   updateTicketTypes,
   updateTicketStatuses,
   updateTicketPriorities,
+  getProjectStats,
+  getProjectTickets,
 } = require('../controllers/projectController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/validationMiddleware');
@@ -149,5 +151,8 @@ router.put(
   validate(ticketPrioritiesValidationRules),
   updateTicketPriorities
 );
+
+router.get('/:id/stats', protect, getProjectStats);
+router.get('/:id/tickets', protect, getProjectTickets);
 
 module.exports = router;

@@ -4,6 +4,7 @@ const Team = require('../models/teamModel');
 const User = require('../models/userModel');
 const Activity = require('../models/activityModel');
 const Notification = require('../models/notificationModel');
+const Ticket = require('../models/ticketModel');
 
 /**
  * @desc    Create a new project
@@ -547,6 +548,82 @@ const updateProjectTicketPriorities = asyncHandler(async (req, res) => {
   res.json(updatedProject);
 });
 
+/**
+ * @desc    Get project statistics
+ * @route   GET /api/projects/:id/stats
+ * @access  Private
+ */
+const getProjectStats = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+
+  if (!project) {
+    res.status(404);
+    throw new Error('Project not found');
+  }
+
+  // Check if user is a member of the project
+  if (!project.members.find(m => m.user.toString() === req.user._id.toString())) {
+    res.status(403);
+    throw new Error('Not authorized to view project statistics');
+  }
+
+  // Get tickets for this project
+  const tickets = await Ticket.find({ project: project._id });
+
+  // Calculate statistics
+  const stats = {
+    totalTickets: tickets.length,
+    openTickets: tickets.filter(t => t.status !== 'Closed').length,
+    closedTickets: tickets.filter(t => t.status === 'Closed').length,
+    highPriorityTickets: tickets.filter(t => t.priority === 'High').length,
+    byStatus: {
+      'New': tickets.filter(t => t.status === 'New').length,
+      'In Progress': tickets.filter(t => t.status === 'In Progress').length,
+      'Review': tickets.filter(t => t.status === 'Review').length,
+      'Closed': tickets.filter(t => t.status === 'Closed').length
+    },
+    byPriority: {
+      'Low': tickets.filter(t => t.priority === 'Low').length,
+      'Medium': tickets.filter(t => t.priority === 'Medium').length,
+      'High': tickets.filter(t => t.priority === 'High').length
+    },
+    byType: {
+      'Bug': tickets.filter(t => t.type === 'Bug').length,
+      'Feature': tickets.filter(t => t.type === 'Feature').length,
+      'Task': tickets.filter(t => t.type === 'Task').length
+    }
+  };
+
+  res.json(stats);
+});
+
+/**
+ * @desc    Get project tickets
+ * @route   GET /api/projects/:id/tickets
+ * @access  Private
+ */
+const getProjectTickets = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+
+  if (!project) {
+    res.status(404);
+    throw new Error('Project not found');
+  }
+
+  // Check if user is a member of the project
+  if (!project.members.find(m => m.user.toString() === req.user._id.toString())) {
+    res.status(403);
+    throw new Error('Not authorized to view project tickets');
+  }
+
+  // Get tickets for this project
+  const tickets = await Ticket.find({ project: project._id })
+    .populate('assignee', 'name')
+    .sort({ createdAt: -1 });
+
+  res.json(tickets);
+});
+
 module.exports = {
   createProject,
   getProjects,
@@ -560,4 +637,6 @@ module.exports = {
   updateTicketTypes: updateProjectTicketTypes,
   updateTicketStatuses: updateProjectTicketStatuses,
   updateTicketPriorities: updateProjectTicketPriorities,
+  getProjectStats,
+  getProjectTickets,
 };

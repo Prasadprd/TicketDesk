@@ -10,7 +10,10 @@ const {
   getUserById,
   updateUser,
   getUserActivity,
+  searchUsers,
 } = require('../controllers/userController');
+
+
 const { protect, admin } = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/validationMiddleware');
 const { body } = require('express-validator');
@@ -50,6 +53,9 @@ router
   .get(protect, admin, getUsers);
 
 router.post('/login', validate(loginValidationRules), loginUser);
+
+// Search users by name (for ticket assignment)
+router.get('/search', protect, searchUsers);
 
 router
   .route('/profile')

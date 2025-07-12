@@ -1,8 +1,11 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Box, Flex, Spinner, useColorModeValue } from '@chakra-ui/react';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
-// Placeholder imports for new pages
+import { AuthContext } from './context/AuthContext';
+
+// Lazy loaded page components
 const Projects = React.lazy(() => import('./pages/Projects'));
 const Tickets = React.lazy(() => import('./pages/Tickets'));
 const Teams = React.lazy(() => import('./pages/Teams'));
@@ -12,25 +15,86 @@ const Activity = React.lazy(() => import('./pages/Activity'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 
+// Protected route component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useContext(AuthContext);
+  const location = useLocation();
+  
+  if (loading) {
+    return (
+      <Flex justify="center" align="center" h="100vh">
+        <Spinner size="xl" color="brand.500" thickness="4px" />
+      </Flex>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  return children;
+};
+
 function App() {
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  
   return (
-    <div>
+    <Box minH="100vh" bg={bgColor}>
       <Navbar />
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projects/*" element={<Projects />} />
-          <Route path="/tickets/*" element={<Tickets />} />
-          <Route path="/teams/*" element={<Teams />} />
-          <Route path="/users/*" element={<Users />} />
-          <Route path="/notifications/*" element={<Notifications />} />
-          <Route path="/activity/*" element={<Activity />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-        </Routes>
-      </React.Suspense>
-    </div>
+      <Box as="main" className="page-container">
+        <React.Suspense fallback={
+          <Flex justify="center" align="center" h="50vh">
+            <Spinner size="xl" color="brand.500" thickness="4px" />
+          </Flex>
+        }>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/projects/*" element={
+              <ProtectedRoute>
+                <Projects />
+              </ProtectedRoute>
+            } />
+            <Route path="/tickets/*" element={
+              <ProtectedRoute>
+                <Tickets />
+              </ProtectedRoute>
+            } />
+            <Route path="/teams/*" element={
+              <ProtectedRoute>
+                <Teams />
+              </ProtectedRoute>
+            } />
+            <Route path="/users/*" element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications/*" element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            } />
+            <Route path="/activity/*" element={
+              <ProtectedRoute>
+                <Activity />
+              </ProtectedRoute>
+            } />
+            
+            {/* Default redirect */}
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
+          </Routes>
+        </React.Suspense>
+      </Box>
+    </Box>
   );
 }
 

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import {
   Box,
@@ -23,7 +24,32 @@ import {
   Input,
   Select,
   useDisclosure,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatGroup,
+  TabPanel,
+  TabPanels,
+  Tab,
+  Tabs,
+  TabList,
+  Heading,
+  Text,
+  Flex,
+  Badge,
+  Avatar,
+  Textarea,
+  Icon,
+  Tooltip,
+  Alert,
+  AlertIcon,
+  useColorModeValue,
 } from '@chakra-ui/react';
+import { FaPlus, FaEye, FaUsers, FaProjectDiagram, FaTicketAlt, FaClipboardList } from 'react-icons/fa';
+import { AuthContext } from '../context/AuthContext';
+
+// Import CSS
+import './Projects.css';
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -31,15 +57,12 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [form, setForm] = useState({
-    name: '',
-    key: '',
-    description: '',
-    team: '',
-    category: '',
-  });
+  const [projectStats, setProjectStats] = useState(null);
+  const [projectTickets, setProjectTickets] = useState([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   // Fetch projects
   useEffect(() => {
@@ -70,6 +93,40 @@ const Projects = () => {
     fetchTeams();
   }, []);
 
+  // Fetch project statistics and tickets
+  useEffect(() => {
+    const fetchProjectDetails = async () => {
+      if (selectedProject) {
+        try {
+          // Fetch project stats
+          const statsRes = await api.get(
+            `/projects/${selectedProject._id}/stats`
+          );
+          setProjectStats(statsRes.data);
+
+          // Fetch project tickets
+          const ticketsRes = await api.get(
+            `/projects/${selectedProject._id}/tickets`
+          );
+          setProjectTickets(ticketsRes.data);
+        } catch (err) {
+          console.error('Error fetching project details:', err);
+        }
+      }
+    };
+    fetchProjectDetails();
+  }, [selectedProject]);
+
+
+  // Form state for creating a project
+  const [form, setForm] = useState({
+    name: '',
+    key: '',
+    description: '',
+    team: '',
+    category: '',
+  });
+
   // Handle form input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -99,117 +156,361 @@ const Projects = () => {
     onOpen();
   };
 
-  if (loading) return <Spinner size="xl" />;
-  if (error) return <Box color="red.500">{error}</Box>;
+  const handleTicketClick = (ticketId) => {
+    navigate(`/tickets/${ticketId}`);
+  };
+
+  const canCreateProject = user && (user.role === 'admin' || user.role === 'developer');
+
+  if (loading) return (
+    <Flex justify="center" align="center" height="50vh">
+      <Spinner size="xl" thickness="4px" color="brand.500" />
+    </Flex>
+  );
+  if (error) return (
+    <Alert status="error" variant="left-accent" borderRadius="md" m={6}>
+      <AlertIcon />
+      {error}
+    </Alert>
+  );
+
+  // Helper function to get category class
+  const getCategoryClass = (category) => {
+    const categoryMap = {
+      'software': 'category-development',
+      'business': 'category-operations',
+      'marketing': 'category-marketing',
+      'design': 'category-design',
+      'support': 'category-support'
+    };
+    return categoryMap[category?.toLowerCase()] || 'category-development';
+  };
+
+  // Helper function to get team initials
+  const getTeamInitials = (teamName) => {
+    if (!teamName) return '';
+    return teamName
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
 
   return (
-    <Box p={6}>
-      <Button
-        colorScheme="blue"
-        mb={4}
-        onClick={() => {
-          setSelectedProject(null);
-          onOpen();
-        }}
-      >
-        Create Project
-      </Button>
-      <Table variant="simple">
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-            <Th>Key</Th>
-            <Th>Team</Th>
-            <Th>Category</Th>
-            <Th>Actions</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {projects.map((project) => (
-            <Tr key={project._id}>
-              <Td>{project.name}</Td>
-              <Td>{project.key}</Td>
-              <Td>{project.team?.name}</Td>
-              <Td>{project.category}</Td>
-              <Td>
-                <Button
-                  size="sm"
-                  onClick={() => handleView(project)}
-                  colorScheme="teal"
-                >
-                  View
-                </Button>
-              </Td>
+    <Box className="projects-container">
+      <Flex className="projects-header">
+        <Heading className="projects-title" size="lg">
+          <Flex align="center">
+            <Icon as={FaProjectDiagram} mr={2} color="brand.500" />
+            Projects
+          </Flex>
+        </Heading>
+        {canCreateProject && (
+          <Button
+            leftIcon={<FaPlus />}
+            colorScheme="brand"
+            onClick={() => {
+              setSelectedProject(null);
+              onOpen();
+            }}
+          >
+            Create Project
+          </Button>
+        )}
+      </Flex>
+
+      {projects.length === 0 ? (
+        <Alert status="info" variant="subtle" borderRadius="md" mt={4}>
+          <AlertIcon />
+          No projects found. {canCreateProject ? 'Create your first project to get started!' : 'Projects will appear here once they are created.'}
+        </Alert>
+      ) : (
+        <Table variant="simple" className="projects-table">
+          <Thead>
+            <Tr>
+              <Th>Name</Th>
+              <Th>Key</Th>
+              <Th>Team</Th>
+              <Th>Category</Th>
+              <Th>Actions</Th>
             </Tr>
-          ))}
-        </Tbody>
-      </Table>
+          </Thead>
+          <Tbody>
+            {projects.map((project) => (
+              <Tr key={project._id}>
+                <Td fontWeight="500">{project.name}</Td>
+                <Td>
+                  <span className="project-key">{project.key}</span>
+                </Td>
+                <Td>
+                  {project.team ? (
+                    <div className="project-team">
+                      <div className="team-avatar">
+                        {getTeamInitials(project.team.name)}
+                      </div>
+                      {project.team.name}
+                    </div>
+                  ) : (
+                    <Text color="gray.500">—</Text>
+                  )}
+                </Td>
+                <Td>
+                  {project.category ? (
+                    <span className={`project-category ${getCategoryClass(project.category)}`}>
+                      {project.category}
+                    </span>
+                  ) : (
+                    <Text color="gray.500">—</Text>
+                  )}
+                </Td>
+                <Td>
+                  <Button
+                    size="sm"
+                    onClick={() => handleView(project)}
+                    colorScheme="brand"
+                    leftIcon={<FaEye />}
+                  >
+                    View
+                  </Button>
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      )}
 
       {/* Modal for create/view project */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} size={selectedProject ? "xl" : "md"}>
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
-            {selectedProject ? 'Project Details' : 'Create Project'}
+        <ModalContent className="project-modal-content">
+          <ModalHeader className="project-modal-header">
+            {selectedProject ? (
+              <Flex align="center">
+                <Icon as={FaProjectDiagram} mr={2} color="brand.500" />
+                {selectedProject.name}
+              </Flex>
+            ) : (
+              <Flex align="center">
+                <Icon as={FaPlus} mr={2} color="brand.500" />
+                Create New Project
+              </Flex>
+            )}
           </ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
+          <ModalBody className="project-modal-body">
             {selectedProject ? (
               <Box>
-                <Box>
-                  <b>Name:</b> {selectedProject.name}
+                <Flex wrap="wrap" gap={6}>
+                  <Box className="project-detail-section" flex="1" minW="250px">
+                    <div className="project-detail-title">Project Key</div>
+                    <div className="project-detail-content">
+                      <span className="project-key">{selectedProject.key}</span>
+                    </div>
+                  </Box>
+                  
+                  <Box className="project-detail-section" flex="1" minW="250px">
+                    <div className="project-detail-title">Category</div>
+                    <div className="project-detail-content">
+                      {selectedProject.category ? (
+                        <span className={`project-category ${getCategoryClass(selectedProject.category)}`}>
+                          {selectedProject.category}
+                        </span>
+                      ) : (
+                        <Text color="gray.500">Not specified</Text>
+                      )}
+                    </div>
+                  </Box>
+                </Flex>
+                
+                <Box className="project-detail-section">
+                  <div className="project-detail-title">Description</div>
+                  <div className="project-detail-content">
+                    {selectedProject.description || <Text color="gray.500">No description provided</Text>}
+                  </div>
                 </Box>
-                <Box>
-                  <b>Key:</b> {selectedProject.key}
+                
+                <Flex wrap="wrap" gap={6}>
+                  <Box className="project-detail-section" flex="1" minW="250px">
+                    <div className="project-detail-title">Team</div>
+                    <div className="project-detail-content">
+                      {selectedProject.team ? (
+                        <div className="project-team">
+                          <div className="team-avatar">
+                            {getTeamInitials(selectedProject.team.name)}
+                          </div>
+                          {selectedProject.team.name}
+                        </div>
+                      ) : (
+                        <Text color="gray.500">No team assigned</Text>
+                      )}
+                    </div>
+                  </Box>
+                  
+                  <Box className="project-detail-section" flex="1" minW="250px">
+                    <div className="project-detail-title">Owner</div>
+                    <div className="project-detail-content">
+                      {selectedProject.owner?.name || <Text color="gray.500">No owner assigned</Text>}
+                    </div>
+                  </Box>
+                </Flex>
+                
+                <Box className="project-detail-section">
+                  <div className="project-detail-title">Members</div>
+                  <div className="project-detail-content">
+                    {selectedProject.members?.length > 0 ? (
+                      <Flex wrap="wrap" gap={2}>
+                        {selectedProject.members.map((member, index) => (
+                          <Badge key={index} colorScheme="brand" borderRadius="full" px={2} py={1}>
+                            {member.user?.name}
+                          </Badge>
+                        ))}
+                      </Flex>
+                    ) : (
+                      <Text color="gray.500">No members assigned</Text>
+                    )}
+                  </div>
                 </Box>
-                <Box>
-                  <b>Description:</b> {selectedProject.description}
+
+                {/* Project statistics */}
+                <Box className="project-detail-section" mt={6}>
+                  <Heading size="sm" mb={3}>
+                    <Flex align="center">
+                      <Icon as={FaClipboardList} mr={2} color="brand.500" />
+                      Project Statistics
+                    </Flex>
+                  </Heading>
+                  <div className="project-stats">
+                    <div className="stat-card">
+                      <div className="stat-label">Total Tickets</div>
+                      <div className="stat-value">{projectStats?.totalTickets || 0}</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-label">Open Tickets</div>
+                      <div className="stat-value">{projectStats?.openTickets || 0}</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-label">Closed Tickets</div>
+                      <div className="stat-value">{projectStats?.closedTickets || 0}</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-label">Assigned</div>
+                      <div className="stat-value">
+                        {projectStats?.assignedTickets || (projectTickets.filter(t => t.assignee).length)}
+                      </div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-label">Unassigned</div>
+                      <div className="stat-value">
+                        {projectStats?.unassignedTickets || (projectTickets.filter(t => !t.assignee).length)}
+                      </div>
+                    </div>
+                  </div>
                 </Box>
-                <Box>
-                  <b>Team:</b> {selectedProject.team?.name}
-                </Box>
-                <Box>
-                  <b>Category:</b> {selectedProject.category}
-                </Box>
-                <Box>
-                  <b>Owner:</b> {selectedProject.owner?.name}
-                </Box>
-                <Box>
-                  <b>Members:</b>{' '}
-                  {selectedProject.members
-                    ?.map((m) => m.user?.name)
-                    .join(', ')}
+
+                {/* Project tickets */}
+                <Box className="project-detail-section" mt={6}>
+                  <Heading size="sm" mb={3}>
+                    <Flex align="center">
+                      <Icon as={FaTicketAlt} mr={2} color="brand.500" />
+                      Project Tickets
+                    </Flex>
+                  </Heading>
+                  
+                  {projectTickets.length > 0 ? (
+                    <Table variant="simple" className="project-tickets-table">
+                      <Thead>
+                        <Tr>
+                          <Th>Title</Th>
+                          <Th>Status</Th>
+                          <Th>Priority</Th>
+                          <Th>Actions</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {projectTickets.map((ticket) => (
+                          <Tr key={ticket._id}>
+                            <Td fontWeight="500">{ticket.title}</Td>
+                            <Td>
+                              <span className={`status-badge status-${ticket.status?.toLowerCase().replace(/\s+/g, '-')}`}>
+                                {ticket.status}
+                              </span>
+                            </Td>
+                            <Td>
+                              <span className={`priority-badge priority-${ticket.priority?.toLowerCase()}`}>
+                                {ticket.priority}
+                              </span>
+                            </Td>
+                            <Td>
+                              <Button
+                                size="sm"
+                                onClick={() => handleTicketClick(ticket._id)}
+                                colorScheme="brand"
+                                variant="outline"
+                                leftIcon={<FaEye />}
+                              >
+                                View
+                              </Button>
+                            </Td>
+                          </Tr>
+                        ))}
+                      </Tbody>
+                    </Table>
+                  ) : (
+                    <Alert status="info" variant="subtle" borderRadius="md">
+                      <AlertIcon />
+                      No tickets found for this project.
+                    </Alert>
+                  )}
                 </Box>
               </Box>
             ) : (
               <form>
-                <FormControl mb={2}>
-                  <FormLabel>Name</FormLabel>
+                <FormControl className="project-form-group">
+                  <FormLabel className="project-form-label">Project Name*</FormLabel>
                   <Input
                     name="name"
                     value={form.name}
                     onChange={handleChange}
+                    placeholder="Enter project name"
+                    className="project-form-input"
+                    required
                   />
                 </FormControl>
-                <FormControl mb={2}>
-                  <FormLabel>Key</FormLabel>
-                  <Input
-                    name="key"
-                    value={form.key}
-                    onChange={handleChange}
-                  />
+                
+                <FormControl className="project-form-group">
+                  <FormLabel className="project-form-label">Project Key*</FormLabel>
+                  <Tooltip label="A short unique identifier for your project (e.g. PRJ, TICK)" placement="top">
+                    <Input
+                      name="key"
+                      value={form.key}
+                      onChange={handleChange}
+                      placeholder="Enter project key (e.g. PRJ)"
+                      className="project-form-input"
+                      required
+                    />
+                  </Tooltip>
                 </FormControl>
-                <FormControl mb={2}>
-                  <FormLabel>Description</FormLabel>
-                  <Input
+                
+                <FormControl className="project-form-group">
+                  <FormLabel className="project-form-label">Description</FormLabel>
+                  <Textarea
                     name="description"
                     value={form.description}
                     onChange={handleChange}
+                    placeholder="Enter project description"
+                    className="project-form-input"
+                    rows={4}
                   />
                 </FormControl>
-                <FormControl mb={2}>
-                  <FormLabel>Team</FormLabel>
-                  <Select name="team" value={form.team} onChange={handleChange}>
+                
+                <FormControl className="project-form-group">
+                  <FormLabel className="project-form-label">Team</FormLabel>
+                  <Select 
+                    name="team" 
+                    value={form.team} 
+                    onChange={handleChange}
+                    className="project-form-input"
+                  >
                     <option value="">Select a team</option>
                     {teams.map((team) => (
                       <option key={team._id} value={team._id}>
@@ -218,35 +519,47 @@ const Projects = () => {
                     ))}
                   </Select>
                 </FormControl>
-                <FormControl mb={2}>
-                  <FormLabel>Category</FormLabel>
+                
+                <FormControl className="project-form-group">
+                  <FormLabel className="project-form-label">Category</FormLabel>
                   <Select
                     name="category"
                     value={form.category}
                     onChange={handleChange}
+                    className="project-form-input"
                   >
-                    <option value="">Select</option>
+                    <option value="">Select category</option>
                     <option value="software">Software</option>
                     <option value="business">Business</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="design">Design</option>
+                    <option value="support">Support</option>
                   </Select>
                 </FormControl>
               </form>
             )}
           </ModalBody>
           <ModalFooter>
-            {selectedProject ? null : (
-              <Button
-                colorScheme="blue"
-                mr={3}
-                onClick={handleCreate}
-                isLoading={loading}
-              >
-                Create
+            {selectedProject ? (
+              <Button variant="ghost" onClick={onClose}>
+                Close
               </Button>
+            ) : (
+              <>
+                <Button
+                  colorScheme="brand"
+                  mr={3}
+                  onClick={handleCreate}
+                  isLoading={loading}
+                  leftIcon={<FaPlus />}
+                >
+                  Create Project
+                </Button>
+                <Button variant="ghost" onClick={onClose}>
+                  Cancel
+                </Button>
+              </>
             )}
-            <Button variant="ghost" onClick={onClose}>
-              Close
-            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

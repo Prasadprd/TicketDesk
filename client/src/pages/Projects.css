@@ -1,0 +1,314 @@
+.projects-container {
+  padding: 1.5rem;
+}
+
+.projects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.projects-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--chakra-colors-gray-800);
+}
+
+.projects-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.projects-table th {
+  background-color: var(--chakra-colors-gray-50);
+  color: var(--chakra-colors-gray-700);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1rem;
+}
+
+.projects-table td {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--chakra-colors-gray-100);
+  color: var(--chakra-colors-gray-700);
+}
+
+.projects-table tr:hover {
+  background-color: var(--chakra-colors-gray-50);
+}
+
+.project-key {
+  font-family: monospace;
+  font-weight: 600;
+  background-color: var(--chakra-colors-gray-100);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.project-category {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.category-development {
+  background-color: var(--chakra-colors-blue-100);
+  color: var(--chakra-colors-blue-700);
+}
+
+.category-marketing {
+  background-color: var(--chakra-colors-purple-100);
+  color: var(--chakra-colors-purple-700);
+}
+
+.category-design {
+  background-color: var(--chakra-colors-pink-100);
+  color: var(--chakra-colors-pink-700);
+}
+
+.category-operations {
+  background-color: var(--chakra-colors-orange-100);
+  color: var(--chakra-colors-orange-700);
+}
+
+.category-support {
+  background-color: var(--chakra-colors-green-100);
+  color: var(--chakra-colors-green-700);
+}
+
+.project-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.team-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--chakra-colors-brand-500);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.project-modal-content {
+  padding: 0;
+}
+
+.project-modal-header {
+  background-color: var(--chakra-colors-gray-50);
+  border-bottom: 1px solid var(--chakra-colors-gray-200);
+  padding: 1rem 1.5rem;
+}
+
+.project-modal-body {
+  padding: 1.5rem;
+}
+
+.project-detail-section {
+  margin-bottom: 1.5rem;
+}
+
+.project-detail-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--chakra-colors-gray-700);
+  font-size: 0.9rem;
+}
+
+.project-detail-content {
+  color: var(--chakra-colors-gray-800);
+}
+
+.project-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  border: 1px solid var(--chakra-colors-gray-100);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--chakra-colors-gray-600);
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--chakra-colors-gray-800);
+}
+
+.project-tickets-table {
+  margin-top: 1rem;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.project-tickets-table th {
+  background-color: var(--chakra-colors-gray-50);
+  color: var(--chakra-colors-gray-700);
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.project-tickets-table td {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--chakra-colors-gray-100);
+  font-size: 0.85rem;
+}
+
+.project-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.project-form-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--chakra-colors-gray-700);
+  font-size: 0.9rem;
+}
+
+.project-form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--chakra-colors-gray-200);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.project-form-input:focus {
+  border-color: var(--chakra-colors-brand-500);
+  box-shadow: 0 0 0 1px var(--chakra-colors-brand-500);
+}
+
+.project-tabs {
+  margin-top: 1.5rem;
+}
+
+.project-tab-list {
+  border-bottom: 1px solid var(--chakra-colors-gray-200);
+}
+
+.project-tab {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: var(--chakra-colors-gray-600);
+}
+
+.project-tab[aria-selected="true"] {
+  color: var(--chakra-colors-brand-500);
+  border-bottom: 2px solid var(--chakra-colors-brand-500);
+}
+
+.project-tab-panel {
+  padding: 1.5rem 0;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-open {
+  background-color: var(--chakra-colors-green-100);
+  color: var(--chakra-colors-green-700);
+}
+
+.status-in-progress {
+  background-color: var(--chakra-colors-blue-100);
+  color: var(--chakra-colors-blue-700);
+}
+
+.status-review {
+  background-color: var(--chakra-colors-purple-100);
+  color: var(--chakra-colors-purple-700);
+}
+
+.status-closed {
+  background-color: var(--chakra-colors-gray-100);
+  color: var(--chakra-colors-gray-700);
+}
+
+/* Priority badges */
+.priority-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.priority-high {
+  background-color: var(--chakra-colors-red-100);
+  color: var(--chakra-colors-red-700);
+}
+
+.priority-medium {
+  background-color: var(--chakra-colors-orange-100);
+  color: var(--chakra-colors-orange-700);
+}
+
+.priority-low {
+  background-color: var(--chakra-colors-green-100);
+  color: var(--chakra-colors-green-700);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .projects-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .projects-table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .project-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .project-stats {
+    grid-template-columns: 1fr;
+  }
+}

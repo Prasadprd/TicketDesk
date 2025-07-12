@@ -1,7 +1,35 @@
+/**
+ * @desc    Search users by name (for ticket assignment)
+ * @route   GET /api/users/search?name=John
+ * @access  Private
+ */
+
 const asyncHandler = require('express-async-handler');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const Activity = require('../models/activityModel');
+
+
+const searchUsers = asyncHandler(async (req, res) => {
+  const { name, project } = req.query;
+  if (!name) {
+    return res.status(400).json({ message: 'Name query is required' });
+  }
+  // Optionally filter by project membership
+  let filter = { name: { $regex: name, $options: 'i' } };
+  if (project) {
+    // Only users who are members of the project
+    const Project = require('../models/projectModel');
+    const proj = await Project.findById(project);
+    if (proj) {
+      const memberIds = proj.members.map(m => m.user);
+      filter._id = { $in: memberIds };
+    }
+  }
+  const users = await User.find(filter).select('name email avatar');
+  res.json(users);
+});
+
 
 /**
  * Generate JWT token
@@ -67,12 +95,14 @@ const registerUser = asyncHandler(async (req, res) => {
  */
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  console.log("Login attempt:", email);
 
   // Check for user email
   const user = await User.findOne({ email });
-
+  console.log("User found:", user ? user._id : "No user found");
   if (user && (await user.matchPassword(password))) {
     // Update last login
+    console.log("User authenticated:", user._id);
     user.lastLogin = Date.now();
     await user.save();
 
@@ -279,4 +309,5 @@ module.exports = {
   getUserById,
   updateUser,
   getUserActivity,
+  searchUsers,
 };
