@@ -8,6 +8,7 @@ import 'chart.js/auto';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  console.log('Rendering Dashboard');
   const navigate = useNavigate();
   const [overview, setOverview] = useState(null);
   const [distribution, setDistribution] = useState(null);
@@ -19,7 +20,9 @@ const Dashboard = () => {
   useEffect(() => {
     // Redirect to login if no token
     const token = localStorage.getItem('token');
+    console.log('Checking token:', token);
     if (!token) {
+      console.log('No token found, redirecting to login');
       navigate('/login');
       return;
     }
@@ -31,12 +34,13 @@ const Dashboard = () => {
           api.get('/dashboard/overview'),
           api.get('/dashboard/ticket-distribution'),
           api.get('/dashboard/project-stats'),
-          api.get('/activity?limit=5'),
+          // api.get('/activity?limit=5'),
         ]);
+        console.log('Fetched data:', { overviewRes, distRes, projRes, activityRes });
         setOverview(overviewRes.data);
         setDistribution(distRes.data);
         setProjectStats(projRes.data);
-        setRecentActivity(activityRes.data || []);
+        // setRecentActivity(activityRes.data || []);
         setError(null);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load dashboard');

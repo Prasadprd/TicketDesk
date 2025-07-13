@@ -57,7 +57,11 @@ const Login = () => {
       
       // Navigate to the page the user was trying to access, or dashboard
       // const from = '/dashboard';
-      navigate('/dashboard');
+      const from = location.state?.from?.pathname || '/dashboard';
+      console.log('Navigating to dashboard', from);
+      navigate(from, { replace: true });
+      // window.location.href = '/dashboard';
+
     } catch (err) {
       toast({
         title: 'Login failed',
