@@ -18,6 +18,7 @@ const Register = React.lazy(() => import('./pages/Register'));
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useContext(AuthContext);
+  // console.log('from ProtectedROute', isAuthenticated)
   const location = useLocation();
   
   if (loading) {
@@ -29,6 +30,7 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!isAuthenticated) {
+    console.log("User is not authenticated, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   

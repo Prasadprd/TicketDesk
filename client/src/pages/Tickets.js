@@ -16,15 +16,42 @@ const Tickets = () => {
   // Search users for assignment
   const handleUserSearch = async (name) => {
     setUserSearch(name);
-    if (!name || !form.project) {
+    if (!name) {
       setUserResults([]);
       return;
     }
     setAssigneeLoading(true);
     try {
-      const res = await api.get(`/users/search?name=${encodeURIComponent(name)}&project=${form.project}`);
+      const projectId = selectedTicket ? selectedTicket.project._id : form.project;
+      if (!projectId) {
+        toast({
+          title: 'Project Required',
+          description: 'Please select a project first',
+          status: 'warning',
+          duration: 3000,
+          isClosable: true
+        });
+        return;
+      }
+      const res = await api.get(`/users/search?name=${encodeURIComponent(name)}&project=${projectId}`);
       setUserResults(res.data);
+      if (res.data.length === 0) {
+        toast({
+          title: 'No Users Found',
+          description: 'No users found matching the search criteria',
+          status: 'info',
+          duration: 3000,
+          isClosable: true
+        });
+      }
     } catch (err) {
+      toast({
+        title: 'Search Failed',
+        description: err.response?.data?.message || 'Failed to search users',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
       setUserResults([]);
     }
     setAssigneeLoading(false);
@@ -105,17 +132,39 @@ const Tickets = () => {
 
   const handleAssign = async (ticketId, userId) => {
     try {
-      await api.put(`/tickets/${ticketId}/assign`, { userId });
+      console.log('Assigning ticket:', ticketId, 'to user:', userId);
+      const assignRes = await api.put(`/tickets/${ticketId}/assign`, { userId });
+      if (!assignRes.data) {
+        throw new Error('Failed to assign ticket');
+      }
+      
       const res = await api.get('/tickets');
       setTickets(res.data.tickets || res.data);
+      
       // Update the selected ticket if it's open
       if (selectedTicket && selectedTicket._id === ticketId) {
         const updatedTicket = (res.data.tickets || res.data).find(t => t._id === ticketId);
         setSelectedTicket(updatedTicket);
       }
-      toast({ title: userId ? 'Ticket assigned successfully' : 'Ticket unassigned successfully', status: 'success' });
+      
+      // Clear user search results after successful assignment
+      setUserResults([]);
+      setUserSearch('');
+      
+      toast({
+        title: userId ? 'Ticket assigned successfully' : 'Ticket unassigned successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
     } catch (err) {
-      toast({ title: err.response?.data?.message || 'Failed to assign ticket', status: 'error' });
+      toast({
+        title: 'Assignment Failed',
+        description: err.response?.data?.message || 'Failed to assign ticket',
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
     }
   };
 
@@ -178,20 +227,20 @@ const Tickets = () => {
       
       <Box className="tickets-table-container">
         <Table variant="simple" className="tickets-table">
-          <Thead>
-            <Tr>
-              <Th>Title</Th>
-              <Th>Project</Th>
-              <Th>Status</Th>
-              <Th>Priority</Th>
-              <Th>Type</Th>
+        <Thead>
+          <Tr>
+            <Th>Title</Th>
+            <Th>Project</Th>
+            <Th>Status</Th>
+            <Th>Priority</Th>
+            <Th>Type</Th>
               <Th>Assignee</Th>
               <Th width="100px">Actions</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
+          </Tr>
+        </Thead>
+        <Tbody>
             {tickets.length > 0 ? tickets.map((ticket) => (
-              <Tr key={ticket._id}>
+            <Tr key={ticket._id}>
                 <Td fontWeight="medium">{ticket.title}</Td>
                 <Td>
                   <Flex align="center">
@@ -216,7 +265,7 @@ const Tickets = () => {
                     <Text color="gray.500" fontSize="sm">Unassigned</Text>
                   )}
                 </Td>
-                <Td>
+              <Td>
                   <Button 
                     size="sm" 
                     onClick={() => handleView(ticket)} 
@@ -226,8 +275,8 @@ const Tickets = () => {
                   >
                     View
                   </Button>
-                </Td>
-              </Tr>
+              </Td>
+            </Tr>
             )) : (
               <Tr>
                 <Td colSpan={7} textAlign="center" py={6}>
@@ -235,8 +284,8 @@ const Tickets = () => {
                 </Td>
               </Tr>
             )}
-          </Tbody>
-        </Table>
+        </Tbody>
+      </Table>
       </Box>
       
       {/* Ticket Modal */}
@@ -256,7 +305,7 @@ const Tickets = () => {
                 <Box className="ticket-detail-item">
                   <Text className="ticket-detail-label">Title</Text>
                   <Text className="ticket-detail-value" fontWeight="medium">{selectedTicket.title}</Text>
-                </Box>
+              </Box>
                 
                 <Box className="ticket-detail-item">
                   <Text className="ticket-detail-label">Description</Text>
@@ -295,32 +344,44 @@ const Tickets = () => {
                 <Box className="ticket-assignee-section">
                   <Text className="ticket-detail-label" mb={3}>Assignee</Text>
                   
-                  <InputGroup mb={3}>
-                    <InputLeftElement pointerEvents="none">
-                      <Icon as={FaSearch} color="gray.400" />
-                    </InputLeftElement>
-                    <Input
-                      placeholder="Search user by name"
-                      value={userSearch}
-                      onChange={e => handleUserSearch(e.target.value)}
-                    />
-                  </InputGroup>
-                  
+                  <Box mb={4}>
+                    <InputGroup mb={3}>
+                      <InputLeftElement pointerEvents="none">
+                        <Icon as={FaSearch} color="gray.400" />
+                      </InputLeftElement>
+                  <Input
+                    placeholder="Search user by name"
+                    value={userSearch}
+                    onChange={e => handleUserSearch(e.target.value)}
+                    // isDisabl   ed={!form.project}
+                  />
+                    </InputGroup>
+                    
                   {assigneeLoading && <Spinner size="sm" ml={2} />}
-                  
+                    
                   {userResults.length > 0 && (
                     <Select
-                      value={selectedTicket.assignee?._id || ''}
-                      onChange={e => handleAssign(selectedTicket._id, e.target.value || null)}
+                        value={selectedTicket.assignee?._id || ''}
+                        onChange={e => handleAssign(selectedTicket._id, e.target.value || null)}
                       placeholder="Select user to assign"
-                      mb={3}
+                        mb={3}
                     >
-                      <option value="">Unassign</option>
+                        <option value="">Unassign</option>
                       {userResults.map(u => (
                         <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
                       ))}
                     </Select>
                   )}
+                    
+                    <Button
+                      size="sm"
+                      colorScheme="blue"
+                      onClick={() => handleUserSearch('')}
+                      mt={2}
+                    >
+                      Search Users
+                    </Button>
+                  </Box>
                   
                   <Flex align="center" bg="gray.50" p={3} borderRadius="md">
                     <Icon as={FaUser} color="gray.500" mr={2} />
@@ -335,12 +396,12 @@ const Tickets = () => {
               <form>
                 <Box className="ticket-form-grid">
                   <FormControl className="ticket-form-full" mb={4}>
-                    <FormLabel>Title</FormLabel>
+                  <FormLabel>Title</FormLabel>
                     <Input name="title" value={form.title} onChange={handleChange} placeholder="Enter ticket title" />
-                  </FormControl>
+                </FormControl>
                   
                   <FormControl className="ticket-form-full" mb={4}>
-                    <FormLabel>Description</FormLabel>
+                  <FormLabel>Description</FormLabel>
                     <Textarea 
                       name="description" 
                       value={form.description} 
@@ -348,31 +409,31 @@ const Tickets = () => {
                       placeholder="Enter ticket description"
                       rows={4}
                     />
-                  </FormControl>
+                </FormControl>
                   
                   <FormControl mb={4}>
-                    <FormLabel>Project</FormLabel>
+                  <FormLabel>Project</FormLabel>
                     <Select 
                       name="project" 
                       value={form.project} 
                       onChange={e => {
-                        handleChange(e);
-                        // Update status/priority/type options when project changes
-                        const selected = projectOptions.find(p => p._id === e.target.value);
-                        setStatusOptions(selected?.ticketStatuses || []);
-                        setPriorityOptions(selected?.ticketPriorities || []);
-                        setTypeOptions(selected?.ticketTypes || []);
+                    handleChange(e);
+                    // Update status/priority/type options when project changes
+                    const selected = projectOptions.find(p => p._id === e.target.value);
+                    setStatusOptions(selected?.ticketStatuses || []);
+                    setPriorityOptions(selected?.ticketPriorities || []);
+                    setTypeOptions(selected?.ticketTypes || []);
                       }}
                       placeholder="Select a project"
                     >
-                      {projectOptions.map(project => (
-                        <option key={project._id} value={project._id}>{project.name}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    {projectOptions.map(project => (
+                      <option key={project._id} value={project._id}>{project.name}</option>
+                    ))}
+                  </Select>
+                </FormControl>
                   
                   <FormControl mb={4}>
-                    <FormLabel>Status</FormLabel>
+                  <FormLabel>Status</FormLabel>
                     <Select 
                       name="status" 
                       value={form.status} 
@@ -380,14 +441,14 @@ const Tickets = () => {
                       placeholder="Select status"
                       isDisabled={!form.project}
                     >
-                      {statusOptions.map(opt => (
-                        <option key={opt.name} value={opt.name}>{opt.name}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    {statusOptions.map(opt => (
+                      <option key={opt.name} value={opt.name}>{opt.name}</option>
+                    ))}
+                  </Select>
+                </FormControl>
                   
                   <FormControl mb={4}>
-                    <FormLabel>Priority</FormLabel>
+                  <FormLabel>Priority</FormLabel>
                     <Select 
                       name="priority" 
                       value={form.priority} 
@@ -395,14 +456,14 @@ const Tickets = () => {
                       placeholder="Select priority"
                       isDisabled={!form.project}
                     >
-                      {priorityOptions.map(opt => (
-                        <option key={opt.name} value={opt.name}>{opt.name}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    {priorityOptions.map(opt => (
+                      <option key={opt.name} value={opt.name}>{opt.name}</option>
+                    ))}
+                  </Select>
+                </FormControl>
                   
                   <FormControl mb={4}>
-                    <FormLabel>Type</FormLabel>
+                  <FormLabel>Type</FormLabel>
                     <Select 
                       name="type" 
                       value={form.type} 
@@ -410,11 +471,11 @@ const Tickets = () => {
                       placeholder="Select type"
                       isDisabled={!form.project}
                     >
-                      {typeOptions.map(opt => (
-                        <option key={opt.name} value={opt.name}>{opt.name}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    {typeOptions.map(opt => (
+                      <option key={opt.name} value={opt.name}>{opt.name}</option>
+                    ))}
+                  </Select>
+                </FormControl>
                   
                   <FormControl className="ticket-form-full" mb={4}>
                     <FormLabel>Assign To</FormLabel>
@@ -461,9 +522,10 @@ const Tickets = () => {
                   isDisabled={!form.title || !form.description || !form.project || !form.status || !form.priority || !form.type}
                 >
                   Create Ticket
-                </Button>
+              </Button>
               </>
             )}
+            <Button variant="ghost" onClick={onClose}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

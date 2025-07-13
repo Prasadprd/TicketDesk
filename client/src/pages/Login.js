@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../api/api';
+import { AuthContext } from '../context/AuthContext';
 import {
   Box, Button, Input, FormControl, FormLabel, Heading, Text, useToast,
   InputGroup, InputLeftElement, InputRightElement, Flex, Icon, VStack
@@ -38,14 +39,16 @@ const Login = () => {
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
+  const { login } = useContext(AuthContext);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      console.log(form);
       const res = await api.post('/users/login', form);
-      localStorage.setItem('token', res.data.token);
-      console.log('Login successful:', res.data);
+      console.log('form:', form);
+      console.log('Login response:', res.data.user);
+      login(res.data.name, res.data.token);
       toast({
         title: 'Login successful',
         description: 'Welcome back to TicketDesk!',
@@ -55,12 +58,9 @@ const Login = () => {
         isClosable: true,
       });
       
-      // Navigate to the page the user was trying to access, or dashboard
-      // const from = '/dashboard';
       const from = location.state?.from?.pathname || '/dashboard';
-      console.log('Navigating to dashboard', from);
-      navigate(from, { replace: true });
-      // window.location.href = '/dashboard';
+      // navigate(from, { replace: true });
+      navigate('/dashboard');
 
     } catch (err) {
       toast({

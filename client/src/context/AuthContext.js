@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       api.get('/users/profile')
         .then(res => {
+          console.log('User loaded from token:', res.data);
           setUser(res.data);
         })
         .catch(() => {
@@ -24,9 +25,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = (userData, token) => {
-    setUser(userData);
+  const login = async (userData, token) => {
+    console.log('User logged in:', userData);
+    console.log('Token:', token);
     localStorage.setItem('token', token);
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setUser(userData);
   };
 
   const logout = () => {
@@ -34,7 +38,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
   };
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = user;
+  console.log("User is authenticated:", isAuthenticated);
   return (
     <AuthContext.Provider value={{ user, setUser, login, logout, loading, isAuthenticated }}>
       {children}

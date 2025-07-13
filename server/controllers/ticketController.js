@@ -687,7 +687,9 @@ const removeWatcher = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const assignTicket = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
+  console.log("Inside assign ticket controller",req.body)
+  const { assigneeId } = req.body;
+  console.log("User ID to assign:", assigneeId)
   const ticket = await Ticket.findById(req.params.id);
 
   if (!ticket) {
@@ -703,25 +705,25 @@ const assignTicket = asyncHandler(async (req, res) => {
   }
 
   // If userId is null, unassign the ticket
-  if (userId === null) {
+  if (assigneeId === null) {
     ticket.assignee = null;
   } else {
     // Check if assignee is a member of the project
-    if (!project.isMember(userId)) {
+    if (!project.isMember(assigneeId)) {
       res.status(400);
       throw new Error('Assignee must be a member of the project');
     }
 
-    ticket.assignee = userId;
+    ticket.assignee = assigneeId;
 
     // Add assignee to watchers if not already watching
-    if (!ticket.watchers.includes(userId)) {
-      ticket.watchers.push(userId);
+    if (!ticket.watchers.includes(assigneeId)) {
+      ticket.watchers.push(assigneeId);
     }
 
     // Create notification for the assignee
     await Notification.createNotification({
-      recipient: userId,
+      recipient: assigneeId,
       sender: req.user._id,
       type: 'ticket_assigned',
       title: 'Ticket Assigned',
@@ -738,7 +740,7 @@ const assignTicket = asyncHandler(async (req, res) => {
     changes: {
       assignee: {
         from: ticket.assignee,
-        to: userId,
+        to: assigneeId,
       },
     },
     timestamp: Date.now(),
@@ -755,9 +757,9 @@ const assignTicket = asyncHandler(async (req, res) => {
     project: ticket.project,
     team: project.team,
     details: { 
-      action: userId ? 'assigned_ticket' : 'unassigned_ticket', 
+      action: assigneeId ? 'assigned_ticket' : 'unassigned_ticket', 
       ticketNumber: ticket.ticketNumber,
-      assignee: userId ? (await User.findById(userId)).name : 'Unassigned'
+      assignee: assigneeId ? (await User.findById(assigneeId)).name : 'Unassigned'
     },
   });
 
