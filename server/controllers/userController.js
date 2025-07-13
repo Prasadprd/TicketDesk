@@ -273,7 +273,7 @@ const updateUser = asyncHandler(async (req, res) => {
     });
 
     res.json({
-      _id: updatedUser._id,
+      _id: updatedUser._id,   
       name: updatedUser.name,
       email: updatedUser.email,
       role: updatedUser.role,

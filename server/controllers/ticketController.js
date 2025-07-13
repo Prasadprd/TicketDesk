@@ -737,6 +737,7 @@ const assignTicket = asyncHandler(async (req, res) => {
   // Add to history
   ticket.history.push({
     user: req.user._id,
+    action : 'updated',
     changes: {
       assignee: {
         from: ticket.assignee,

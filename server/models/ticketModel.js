@@ -209,17 +209,20 @@ ticketSchema.methods.updateStatus = function (userId, newStatus) {
 
 // Method to assign ticket to a user
 ticketSchema.methods.assignTo = function (userId, assigneeId) {
-  const oldAssignee = this.assignee;
-  this.assignee = assigneeId;
+  const oldAssignee = this.assignee ? this.assignee.toString() : null;
+  this.assignee = assigneeId || null;
 
+  const entry = {
+  user: userId,
+  action: 'updated',
+  field: 'assignee',
+  oldValue: oldAssignee || null,
+  newValue: assigneeId || null,
+  };
+  
+  console.log('Adding to history:', entry);
   // Add to history
-  this.history.push({
-    user: userId,
-    action: 'updated',
-    field: 'assignee',
-    oldValue: oldAssignee,
-    newValue: assigneeId,
-  });
+  this.history.push(entry);
 
   return this.save();
 };

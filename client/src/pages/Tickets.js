@@ -130,10 +130,10 @@ const Tickets = () => {
     onOpen();
   };
 
-  const handleAssign = async (ticketId, userId) => {
+  const handleAssign = async (ticketId, assigneeId) => {
     try {
-      console.log('Assigning ticket:', ticketId, 'to user:', userId);
-      const assignRes = await api.put(`/tickets/${ticketId}/assign`, { userId });
+      console.log('Assigning ticket:', ticketId, 'to user:', assigneeId);
+      const assignRes = await api.put(`/tickets/${ticketId}/assign`, { assigneeId });
       if (!assignRes.data) {
         throw new Error('Failed to assign ticket');
       }
@@ -152,7 +152,7 @@ const Tickets = () => {
       setUserSearch('');
       
       toast({
-        title: userId ? 'Ticket assigned successfully' : 'Ticket unassigned successfully',
+        title: assigneeId ? 'Ticket assigned successfully' : 'Ticket unassigned successfully',
         status: 'success',
         duration: 3000,
         isClosable: true
