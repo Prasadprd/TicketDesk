@@ -48,7 +48,7 @@ const Login = () => {
       const res = await api.post('/users/login', form);
       console.log('form:', form);
       console.log('Login response:', res.data.user);
-      login(res.data.name, res.data.token);
+      login(res.data, res.data.token);
       toast({
         title: 'Login successful',
         description: 'Welcome back to TicketDesk!',

@@ -34,12 +34,7 @@ const userSchema = mongoose.Schema(
       type: String,
       default: '',
     },
-    teams: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Team',
-      },
-    ],
+    // teams field removed as team functionality has been removed
     isActive: {
       type: Boolean,
       default: true,
@@ -86,7 +81,6 @@ userSchema.methods.getProfile = function () {
     role: this.role,
     avatar: this.avatar,
     bio: this.bio,
-    teams: this.teams,
     isActive: this.isActive,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,

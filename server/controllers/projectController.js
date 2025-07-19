@@ -1,39 +1,55 @@
 const asyncHandler = require('express-async-handler');
 const Project = require('../models/projectModel');
-const Team = require('../models/teamModel');
 const User = require('../models/userModel');
 const Activity = require('../models/activityModel');
 const Notification = require('../models/notificationModel');
 const Ticket = require('../models/ticketModel');
+// No Team model import needed as team functionality has been removed
+
+/**
+ * Generate a project key from the project name
+ * @param {string} name - Project name
+ * @returns {string} - Project key
+ */
+const generateProjectKey = (name) => {
+  // Extract first letter of each word, uppercase, and limit to 5 characters
+  const key = name
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 5);
+  
+  // If key is too short, add random characters
+  if (key.length < 2) {
+    return key + Math.random().toString(36).substring(2, 4).toUpperCase();
+  }
+  
+  return key;
+};
 
 /**
  * @desc    Create a new project
  * @route   POST /api/projects
- * @access  Private
+ * @access  Private (Admin and Developer only)
  */
 const createProject = asyncHandler(async (req, res) => {
-  const { name, description, key, team, category, startDate, endDate } = req.body;
-
+  const { name, description, category, startDate, endDate } = req.body;
+  
+  // Check if user is authorized to create a project (admin or developer only)
+  if (req.user.role !== 'admin' && req.user.role !== 'developer') {
+    res.status(403);
+    throw new Error('Only admins and developers can create projects');
+  }
+  
+  // Auto-generate project key from project name
+  const key = generateProjectKey(name);
+  
   // Check if project with the same key already exists
   const projectExists = await Project.findOne({ key });
 
   if (projectExists) {
     res.status(400);
-    throw new Error('Project with this key already exists');
-  }
-
-  // Check if team exists
-  const teamExists = await Team.findById(team);
-
-  if (!teamExists) {
-    res.status(404);
-    throw new Error('Team not found');
-  }
-
-  // Check if user is a member of the team
-  if (!teamExists.isMember(req.user._id)) {
-    res.status(403);
-    throw new Error('You must be a member of the team to create a project');
+    throw new Error('Project with this key already exists. Please try a different name.');
   }
 
   // Create project
@@ -42,7 +58,6 @@ const createProject = asyncHandler(async (req, res) => {
     description,
     key,
     owner: req.user._id,
-    team,
     category: category || 'software',
     startDate: startDate || Date.now(),
     endDate: endDate || null,
@@ -56,13 +71,6 @@ const createProject = asyncHandler(async (req, res) => {
   });
 
   if (project) {
-    // Add project to team's projects
-    await Team.findByIdAndUpdate(
-      team,
-      { $push: { projects: project._id } },
-      { new: true }
-    );
-
     // Log activity
     await Activity.logActivity({
       user: req.user._id,
@@ -70,28 +78,10 @@ const createProject = asyncHandler(async (req, res) => {
       entityType: 'project',
       entityId: project._id,
       project: project._id,
-      team: project.team,
       details: { name: project.name, key: project.key },
     });
 
-    // Notify team members
-    const teamMembers = teamExists.members.map(member => member.user);
-    
-    for (const memberId of teamMembers) {
-      // Don't notify the creator
-      if (memberId.toString() === req.user._id.toString()) continue;
-      
-      await Notification.createNotification({
-        recipient: memberId,
-        sender: req.user._id,
-        type: 'project_update',
-        title: 'New Project Created',
-        message: `A new project ${project.name} (${project.key}) has been created in team ${teamExists.name}.`,
-        entityType: 'project',
-        entityId: project._id,
-        link: `/projects/${project._id}`,
-      });
-    }
+    // No need to notify team members as we've removed team functionality
 
     res.status(201).json(project);
   } else {
@@ -106,12 +96,28 @@ const createProject = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getProjects = asyncHandler(async (req, res) => {
-  // Get projects where user is a member
-  const projects = await Project.find({
-    'members.user': req.user._id,
-  })
+  let query = {};
+  
+  // Role-based access control for projects
+  if (req.user.role === 'admin') {
+    // Admins can see all projects
+    query = {};
+  } else if (req.user.role === 'developer') {
+    // Developers can see projects they created or are part of
+    query = {
+      $or: [
+        { owner: req.user._id },
+        { 'members.user': req.user._id }
+      ]
+    };
+  } else {
+    // Submitters can only see projects they are part of
+    query = { 'members.user': req.user._id };
+  }
+  
+  // Get projects based on role-specific query
+  const projects = await Project.find(query)
     .populate('owner', 'name email avatar')
-    .populate('team', 'name')
     .populate('members.user', 'name email avatar');
 
   res.json(projects);
@@ -125,7 +131,6 @@ const getProjects = asyncHandler(async (req, res) => {
 const getProjectById = asyncHandler(async (req, res) => {
   const project = await Project.findById(req.params.id)
     .populate('owner', 'name email avatar')
-    .populate('team', 'name')
     .populate('members.user', 'name email avatar');
 
   if (project) {
@@ -173,7 +178,6 @@ const updateProject = asyncHandler(async (req, res) => {
       entityType: 'project',
       entityId: project._id,
       project: project._id,
-      team: project.team,
       details: { name: project.name, key: project.key },
     });
 
@@ -199,12 +203,7 @@ const deleteProject = asyncHandler(async (req, res) => {
       throw new Error('Only the project owner can delete the project');
     }
 
-    // Remove project from team's projects array
-    await Team.findByIdAndUpdate(
-      project.team,
-      { $pull: { projects: project._id } },
-      { new: true }
-    );
+    // No need to update team as we've removed team functionality
 
     await project.remove();
 
@@ -214,7 +213,6 @@ const deleteProject = asyncHandler(async (req, res) => {
       action: 'deleted',
       entityType: 'project',
       entityId: project._id,
-      team: project.team,
       details: { name: project.name, key: project.key },
     });
 
@@ -258,12 +256,7 @@ const addProjectMember = asyncHandler(async (req, res) => {
     throw new Error('User is already a member of this project');
   }
 
-  // Check if user is a member of the team
-  const team = await Team.findById(project.team);
-  if (!team.isMember(userId)) {
-    res.status(400);
-    throw new Error('User must be a member of the team to join the project');
-  }
+  // No team check required as we've removed team functionality
 
   // Add member to project
   await project.addMember(userId, role || 'developer');
@@ -275,7 +268,6 @@ const addProjectMember = asyncHandler(async (req, res) => {
     entityType: 'project',
     entityId: project._id,
     project: project._id,
-    team: project.team,
     details: { action: 'added_member', member: user.name, role: role || 'developer' },
   });
 
@@ -339,7 +331,6 @@ const removeProjectMember = asyncHandler(async (req, res) => {
     entityType: 'project',
     entityId: project._id,
     project: project._id,
-    team: project.team,
     details: { action: 'removed_member', member: user ? user.name : userId },
   });
 
@@ -392,7 +383,6 @@ const updateProjectMemberRole = asyncHandler(async (req, res) => {
     entityType: 'project',
     entityId: project._id,
     project: project._id,
-    team: project.team,
     details: { action: 'updated_member_role', member: user ? user.name : userId, role },
   });
 
@@ -467,7 +457,6 @@ const updateProjectTicketTypes = asyncHandler(async (req, res) => {
     entityType: 'project',
     entityId: project._id,
     project: project._id,
-    team: project.team,
     details: { action: 'updated_ticket_types' },
   });
 
@@ -504,7 +493,6 @@ const updateProjectTicketStatuses = asyncHandler(async (req, res) => {
     entityType: 'project',
     entityId: project._id,
     project: project._id,
-    team: project.team,
     details: { action: 'updated_ticket_statuses' },
   });
 
@@ -541,7 +529,6 @@ const updateProjectTicketPriorities = asyncHandler(async (req, res) => {
     entityType: 'project',
     entityId: project._id,
     project: project._id,
-    team: project.team,
     details: { action: 'updated_ticket_priorities' },
   });
 

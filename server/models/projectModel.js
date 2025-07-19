@@ -25,11 +25,6 @@ const projectSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    team: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Team',
-      required: true,
-    },
     members: [
       {
         user: {
@@ -54,7 +49,7 @@ const projectSchema = mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['software', 'hardware', 'network', 'security', 'other'],
+      enum: ['software', 'business', 'marketing', 'design', 'support'],
       default: 'software',
     },
     startDate: {

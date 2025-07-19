@@ -28,7 +28,7 @@ const Navbar = () => {
             <Button as={Link} to="/dashboard" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Dashboard</Button>
             <Button as={Link} to="/projects" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Projects</Button>
             <Button as={Link} to="/tickets" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Tickets</Button>
-            <Button as={Link} to="/teams" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Teams</Button>
+            {/* <Button as={Link} to="/teams" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Teams</Button> */}
             <Button as={Link} to="/users" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Users</Button>
             <Button as={Link} to="/notifications" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Notifications</Button>
             <Button as={Link} to="/activity" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Activity</Button>
@@ -87,7 +87,7 @@ const Navbar = () => {
               <Button as={Link} to="/dashboard" variant="ghost" onClick={onClose} justifyContent="flex-start" borderRadius={0} py={6}>Dashboard</Button>
               <Button as={Link} to="/projects" variant="ghost" onClick={onClose} justifyContent="flex-start" borderRadius={0} py={6}>Projects</Button>
               <Button as={Link} to="/tickets" variant="ghost" onClick={onClose} justifyContent="flex-start" borderRadius={0} py={6}>Tickets</Button>
-              <Button as={Link} to="/teams" variant="ghost" onClick={onClose} justifyContent="flex-start" borderRadius={0} py={6}>Teams</Button>
+              {/* Teams functionality has been removed */}
               <Button as={Link} to="/users" variant="ghost" onClick={onClose} justifyContent="flex-start" borderRadius={0} py={6}>Users</Button>
               <Button as={Link} to="/notifications" variant="ghost" onClick={onClose} justifyContent="flex-start" borderRadius={0} py={6}>Notifications</Button>
               <Button as={Link} to="/activity" variant="ghost" onClick={onClose} justifyContent="flex-start" borderRadius={0} py={6}>Activity</Button>

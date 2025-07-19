@@ -23,15 +23,7 @@ const { body } = require('express-validator');
 // Validation rules
 const projectValidationRules = [
   body('name').notEmpty().withMessage('Project name is required'),
-  body('key')
-    .notEmpty()
-    .withMessage('Project key is required')
-    .isLength({ min: 2, max: 10 })
-    .withMessage('Project key must be between 2 and 10 characters')
-    .matches(/^[A-Z0-9]+$/)
-    .withMessage('Project key must be uppercase alphanumeric'),
   body('description').optional(),
-  body('team').optional(),
   body('category').optional(),
   body('status')
     .optional()
@@ -89,7 +81,7 @@ const ticketPrioritiesValidationRules = [
 // Routes
 router
   .route('/')
-  .post(protect, validate(projectValidationRules), createProject)
+  .post(protect, authorize('user', ['admin', 'developer']), validate(projectValidationRules), createProject)
   .get(protect, getProjects);
 
 router

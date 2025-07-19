@@ -70,11 +70,11 @@ function App() {
                 <Tickets />
               </ProtectedRoute>
             } />
-            <Route path="/teams/*" element={
+            {/* <Route path="/teams/*" element={
               <ProtectedRoute>
                 <Teams />
               </ProtectedRoute>
-            } />
+            } /> */}
             <Route path="/users/*" element={
               <ProtectedRoute>
                 <Users />

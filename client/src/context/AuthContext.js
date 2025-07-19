@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
         .then(res => {
           console.log('User loaded from token:', res.data);
           setUser(res.data);
+          console.log("User from authcontext", res.data);
         })
         .catch(() => {
           setUser(null);

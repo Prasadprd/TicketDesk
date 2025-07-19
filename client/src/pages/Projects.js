@@ -53,7 +53,6 @@ import './Projects.css';
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
-  const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -80,18 +79,7 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  // Fetch teams for dropdown
-  useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const res = await api.get('/teams');
-        setTeams(res.data);
-      } catch (err) {
-        // ignore
-      }
-    };
-    fetchTeams();
-  }, []);
+  // Teams functionality has been removed
 
   // Fetch project statistics and tickets
   useEffect(() => {
@@ -121,9 +109,7 @@ const Projects = () => {
   // Form state for creating a project
   const [form, setForm] = useState({
     name: '',
-    key: '',
     description: '',
-    team: '',
     category: '',
   });
 
@@ -138,7 +124,7 @@ const Projects = () => {
       await api.post('/projects', form);
       toast({ title: 'Project created', status: 'success' });
       onClose();
-      setForm({ name: '', key: '', description: '', team: '', category: '' });
+      setForm({ name: '', description: '', category: '' });
       // Refresh list
       const res = await api.get('/projects');
       setProjects(res.data);
@@ -160,7 +146,11 @@ const Projects = () => {
     navigate(`/tickets/${ticketId}`);
   };
 
-  const canCreateProject = user && (user.role === 'admin' || user.role === 'developer');
+  const canCreateProject = () => {
+    console.log('Inside create project, user:', user.role);
+    
+    return (user && (user.role === 'admin' || user.role === 'developer'));
+  }
 
   if (loading) return (
     <Flex justify="center" align="center" height="50vh">
@@ -186,16 +176,6 @@ const Projects = () => {
     return categoryMap[category?.toLowerCase()] || 'category-development';
   };
 
-  // Helper function to get team initials
-  const getTeamInitials = (teamName) => {
-    if (!teamName) return '';
-    return teamName
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase();
-  };
-
   return (
     <Box className="projects-container">
       <Flex className="projects-header">
@@ -205,7 +185,7 @@ const Projects = () => {
             Projects
           </Flex>
         </Heading>
-        {canCreateProject && (
+        {canCreateProject() && (
           <Button
             leftIcon={<FaPlus />}
             colorScheme="brand"
@@ -222,7 +202,7 @@ const Projects = () => {
       {projects.length === 0 ? (
         <Alert status="info" variant="subtle" borderRadius="md" mt={4}>
           <AlertIcon />
-          No projects found. {canCreateProject ? 'Create your first project to get started!' : 'Projects will appear here once they are created.'}
+          No projects found. {canCreateProject() ? 'Create your first project to get started!' : 'Projects will appear here once they are created.'}
         </Alert>
       ) : (
         <Table variant="simple" className="projects-table">
@@ -230,7 +210,7 @@ const Projects = () => {
             <Tr>
               <Th>Name</Th>
               <Th>Key</Th>
-              <Th>Team</Th>
+              <Th>Owner</Th>
               <Th>Category</Th>
               <Th>Actions</Th>
             </Tr>
@@ -243,12 +223,10 @@ const Projects = () => {
                   <span className="project-key">{project.key}</span>
                 </Td>
                 <Td>
-                  {project.team ? (
-                    <div className="project-team">
-                      <div className="team-avatar">
-                        {getTeamInitials(project.team.name)}
-                      </div>
-                      {project.team.name}
+                  {project.owner ? (
+                    <div className="project-owner">
+                      <Avatar size="xs" name={project.owner.name} src={project.owner.avatar} mr={2} />
+                      {project.owner.name}
                     </div>
                   ) : (
                     <Text color="gray.500">—</Text>
@@ -329,30 +307,19 @@ const Projects = () => {
                   </div>
                 </Box>
                 
-                <Flex wrap="wrap" gap={6}>
-                  <Box className="project-detail-section" flex="1" minW="250px">
-                    <div className="project-detail-title">Team</div>
-                    <div className="project-detail-content">
-                      {selectedProject.team ? (
-                        <div className="project-team">
-                          <div className="team-avatar">
-                            {getTeamInitials(selectedProject.team.name)}
-                          </div>
-                          {selectedProject.team.name}
-                        </div>
-                      ) : (
-                        <Text color="gray.500">No team assigned</Text>
-                      )}
-                    </div>
-                  </Box>
-                  
-                  <Box className="project-detail-section" flex="1" minW="250px">
-                    <div className="project-detail-title">Owner</div>
-                    <div className="project-detail-content">
-                      {selectedProject.owner?.name || <Text color="gray.500">No owner assigned</Text>}
-                    </div>
-                  </Box>
-                </Flex>
+                <Box className="project-detail-section" flex="1" minW="250px">
+                  <div className="project-detail-title">Owner</div>
+                  <div className="project-detail-content">
+                    {selectedProject.owner ? (
+                      <div className="project-owner">
+                        <Avatar size="sm" name={selectedProject.owner.name} src={selectedProject.owner.avatar} mr={2} />
+                        {selectedProject.owner.name}
+                      </div>
+                    ) : (
+                      <Text color="gray.500">No owner assigned</Text>
+                    )}
+                  </div>
+                </Box>
                 
                 <Box className="project-detail-section">
                   <div className="project-detail-title">Members</div>
@@ -478,20 +445,6 @@ const Projects = () => {
                 </FormControl>
                 
                 <FormControl className="project-form-group">
-                  <FormLabel className="project-form-label">Project Key*</FormLabel>
-                  <Tooltip label="A short unique identifier for your project (e.g. PRJ, TICK)" placement="top">
-                    <Input
-                      name="key"
-                      value={form.key}
-                      onChange={handleChange}
-                      placeholder="Enter project key (e.g. PRJ)"
-                      className="project-form-input"
-                      required
-                    />
-                  </Tooltip>
-                </FormControl>
-                
-                <FormControl className="project-form-group">
                   <FormLabel className="project-form-label">Description</FormLabel>
                   <Textarea
                     name="description"
@@ -503,22 +456,10 @@ const Projects = () => {
                   />
                 </FormControl>
                 
-                <FormControl className="project-form-group">
-                  <FormLabel className="project-form-label">Team</FormLabel>
-                  <Select 
-                    name="team" 
-                    value={form.team} 
-                    onChange={handleChange}
-                    className="project-form-input"
-                  >
-                    <option value="">Select a team</option>
-                    {teams.map((team) => (
-                      <option key={team._id} value={team._id}>
-                        {team.name}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Alert status="info" mb={4}>
+                  <AlertIcon />
+                  Project key will be auto-generated based on the project name.
+                </Alert>
                 
                 <FormControl className="project-form-group">
                   <FormLabel className="project-form-label">Category</FormLabel>
