@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { Box, Button, Table, Thead, Tbody, Tr, Th, Td, Spinner, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, FormControl, FormLabel, Input, Select, useDisclosure, Heading, Text, Flex, Badge, Textarea, InputGroup, InputLeftElement, Icon, Tag, TagLabel, Divider } from '@chakra-ui/react';
 import { FaSearch, FaTicketAlt, FaFilter, FaPlus, FaUser, FaProjectDiagram, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
 import './Tickets.css';
 
 const Tickets = () => {
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -124,10 +126,7 @@ const Tickets = () => {
   };
 
   const handleView = (ticket) => {
-    setSelectedTicket(ticket);
-    setUserSearch('');
-    setUserResults([]);
-    onOpen();
+    navigate(`/tickets/${ticket._id}`);
   };
 
   const handleAssign = async (ticketId, assigneeId) => {
@@ -525,7 +524,7 @@ const Tickets = () => {
               </Button>
               </>
             )}
-            <Button variant="ghost" onClick={onClose}>Close</Button>
+            {/* <Button variant="ghost" onClick={onClose}>Close</Button> */}
           </ModalFooter>
         </ModalContent>
       </Modal>

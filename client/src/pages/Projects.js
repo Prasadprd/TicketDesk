@@ -121,6 +121,7 @@ const Projects = () => {
   // Create project
   const handleCreate = async () => {
     try {
+      console.log("from create project", form);
       await api.post('/projects', form);
       toast({ title: 'Project created', status: 'success' });
       onClose();
@@ -147,7 +148,7 @@ const Projects = () => {
   };
 
   const canCreateProject = () => {
-    console.log('Inside create project, user:', user.role);
+    // console.log('Inside create project, user:', user.role);
     
     return (user && (user.role === 'admin' || user.role === 'developer'));
   }

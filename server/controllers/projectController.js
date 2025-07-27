@@ -33,10 +33,12 @@ const generateProjectKey = (name) => {
  * @access  Private (Admin and Developer only)
  */
 const createProject = asyncHandler(async (req, res) => {
+  console.log("from create project controller,", req.body)
   const { name, description, category, startDate, endDate } = req.body;
   
   // Check if user is authorized to create a project (admin or developer only)
   if (req.user.role !== 'admin' && req.user.role !== 'developer') {
+    console.log("failed due to role");
     res.status(403);
     throw new Error('Only admins and developers can create projects');
   }
@@ -97,7 +99,7 @@ const createProject = asyncHandler(async (req, res) => {
  */
 const getProjects = asyncHandler(async (req, res) => {
   let query = {};
-  
+  // console.log("Inside get project")
   // Role-based access control for projects
   if (req.user.role === 'admin') {
     // Admins can see all projects
@@ -129,13 +131,16 @@ const getProjects = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getProjectById = asyncHandler(async (req, res) => {
+  console.log("Inside get project")
   const project = await Project.findById(req.params.id)
     .populate('owner', 'name email avatar')
     .populate('members.user', 'name email avatar');
 
   if (project) {
+    console.log("project:",project)
     // Check if user is a member of the project
     if (!project.isMember(req.user._id)) {
+      console.log("return ng 403")
       res.status(403);
       throw new Error('Not authorized to access this project');
     }

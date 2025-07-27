@@ -147,12 +147,15 @@ ticketSchema.pre('save', async function (next) {
       if (!project) {
         return next(new Error('Project not found'));
       }
-      // console.log("Inside the ticketMOdel")
-      // Get the count of tickets for this project
-      const count = await mongoose.model('Ticket').countDocuments({ project: this.project });
-
-      // Generate ticket number (e.g., PRJ-123)
-      this.ticketNumber = `${project.key}-${count + 1}`;
+      
+      // Get the current year (YY format)
+      const currentYear = new Date().getFullYear().toString().substr(-2);
+      
+      // Get the count of all tickets
+      const count = await mongoose.model('Ticket').countDocuments();
+      
+      // Generate ticket number (e.g., TICK230001 for the first ticket in 2023)
+      this.ticketNumber = `TICK${currentYear}${(count + 1).toString().padStart(4, '0')}`;
       console.log("Ticket number generated:", this.ticketNumber);
 
       // Add creation to history

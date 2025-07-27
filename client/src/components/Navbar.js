@@ -1,18 +1,56 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Box, Flex, Button, Avatar, Menu, MenuButton, MenuList, MenuItem, IconButton, useColorModeValue, Drawer, DrawerBody, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton, useDisclosure } from '@chakra-ui/react';
-import { HamburgerIcon, ChevronDownIcon } from '@chakra-ui/icons';
+import { Box, Flex, Button, Avatar, Menu, MenuButton, MenuList, MenuItem, IconButton, useColorModeValue, Drawer, DrawerBody, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton, useDisclosure, Input, InputGroup, InputLeftElement, useToast } from '@chakra-ui/react';
+import { HamburgerIcon, ChevronDownIcon, SearchIcon } from '@chakra-ui/icons';
 import { AuthContext } from '../context/AuthContext';
+import api from '../api/api';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [searchQuery, setSearchQuery] = useState('');
+  const toast = useToast();
   
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+  
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    try {
+      // Search for ticket by ticket number
+      const res = await api.get(`/tickets?search=${searchQuery.trim()}`);
+      
+      if (res.data.tickets && res.data.tickets.length > 0) {
+        // If ticket found, navigate to it
+        navigate(`/tickets/${res.data.tickets[0]._id}`);
+      } else {
+        // If no ticket found, show toast message
+        toast({
+          title: 'Ticket not found',
+          description: `No ticket found with number ${searchQuery}`,
+          status: 'warning',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to search for ticket',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+    
+    // Clear search input
+    setSearchQuery('');
   };
 
   return (
@@ -34,6 +72,22 @@ const Navbar = () => {
             <Button as={Link} to="/activity" className="navbar-link" colorScheme="brand" variant="ghost" size="md">Activity</Button>
           </Flex>
         </Flex>
+        
+        {/* Ticket Search */}
+        <form onSubmit={handleSearch} style={{ marginRight: '20px' }}>
+          <InputGroup size="sm" width="250px">
+            <InputLeftElement pointerEvents="none">
+              <SearchIcon color="gray.400" />
+            </InputLeftElement>
+            <Input
+              type="text"
+              placeholder="Search ticket by number"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              borderRadius="md"
+            />
+          </InputGroup>
+        </form>
         
         {/* Mobile menu button */}
         <IconButton

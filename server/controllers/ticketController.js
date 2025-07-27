@@ -11,6 +11,19 @@ const User = require('../models/userModel');
  * @route   POST /api/tickets
  * @access  Private
  */
+
+const checkValidType = (projectExists, type) => {
+  return projectExists.ticketTypes.some(tt => tt.name === type);
+}
+
+const checkValidStatus = (status, projectExists) => {
+  return projectExists.ticketStatuses.some(ts => ts.name === status);
+}
+
+const checkValidPriority = (priority, projectExists) => {
+  return projectExists.ticketPriorities.some(tp => tp.name === priority);
+}
+
 const createTicket = asyncHandler(async (req, res) => {
   const {
     title,
@@ -27,7 +40,7 @@ const createTicket = asyncHandler(async (req, res) => {
 
   // Check if project exists
   const projectExists = await Project.findById(project);
-  console.log(projectExists.ticketTypes)
+  
 
   if (!projectExists) {
     res.status(404);
@@ -42,8 +55,9 @@ const createTicket = asyncHandler(async (req, res) => {
 
   // Validate ticket type, status, and priority against project settings
   const isValidType = projectExists.ticketTypes.some(tt => tt.name === type);
-  console.log("Ticket is valid?",isValidType)
+  
   if (!isValidType) {
+    
     res.status(400);
     throw new Error(`Invalid ticket type. Valid types are: ${projectExists.ticketTypes.join(', ')}`);
   }
@@ -237,37 +251,59 @@ const getTicketById = asyncHandler(async (req, res) => {
  */
 const updateTicket = asyncHandler(async (req, res) => {
   const ticket = await Ticket.findById(req.params.id);
-
+  
   if (!ticket) {
     res.status(404);
     throw new Error('Ticket not found');
   }
 
-  // Check if user is a member of the project
-  const project = await Project.findById(ticket.project);
-  if (!project.isMember(req.user._id)) {
+  // Get the current project
+  const currentProject = await Project.findById(ticket.project);
+  if (!currentProject.isMember(req.user._id)) {
     res.status(403);
     throw new Error('Not authorized to update this ticket');
   }
-
-  // Validate ticket type, status, and priority against project settings
-  if (req.body.type && !project.ticketTypes.includes(req.body.type)) {
+  
+  // If project is being changed, validate the new project
+  let targetProject = currentProject;
+  if (req.body.project && req.body.project !== ticket.project.toString()) {
+    console.log(`Project change detected: ${ticket.project} -> ${req.body.project}`);
+    targetProject = await Project.findById(req.body.project);
+    
+    if (!targetProject) {
+      res.status(404);
+      throw new Error('New project not found');
+    }
+    
+    if (!targetProject.isMember(req.user._id)) {
+      res.status(403);
+      throw new Error('Not authorized to move ticket to the target project');
+    }
+  }
+  
+  console.log(req.body);
+  console.log('Target project:', targetProject.name);
+  // Validate ticket type, status, and priority against target project settings
+  const isValidType = checkValidType(targetProject, req.body.type);
+  if (req.body.type && !isValidType) {
     res.status(400);
-    throw new Error(`Invalid ticket type. Valid types are: ${project.ticketTypes.join(', ')}`);
+    throw new Error(`Invalid ticket type. Valid types for this project are: ${targetProject.ticketTypes.map(t => t.name).join(', ')}`);
   }
 
-  if (req.body.status && !project.ticketStatuses.includes(req.body.status)) {
+  const isValidStatus = checkValidStatus(req.body.status, targetProject);
+  if (req.body.status && !isValidStatus) {
     res.status(400);
-    throw new Error(`Invalid ticket status. Valid statuses are: ${project.ticketStatuses.join(', ')}`);
+    throw new Error(`Invalid ticket status. Valid statuses for this project are: ${targetProject.ticketStatuses.map(s => s.name).join(', ')}`);
+  }
+  
+  const isValidPriority = checkValidPriority(req.body.priority, targetProject);
+  if (req.body.priority && !isValidPriority) {
+    res.status(400);
+    throw new Error(`Invalid ticket priority. Valid priorities for this project are: ${targetProject.ticketPriorities.map(p => p.name).join(', ')}`);
   }
 
-  if (req.body.priority && !project.ticketPriorities.includes(req.body.priority)) {
-    res.status(400);
-    throw new Error(`Invalid ticket priority. Valid priorities are: ${project.ticketPriorities.join(', ')}`);
-  }
-
-  // If assignee is provided, check if they are a member of the project
-  if (req.body.assignee && !project.isMember(req.body.assignee)) {
+  // If assignee is provided, check if they are a member of the target project
+  if (req.body.assignee && !targetProject.isMember(req.body.assignee)) {
     res.status(400);
     throw new Error('Assignee must be a member of the project');
   }
@@ -298,7 +334,10 @@ const updateTicket = asyncHandler(async (req, res) => {
 
   // Update ticket fields
   Object.keys(req.body).forEach(key => {
-    if (key !== 'project' && key !== 'reporter' && key !== 'ticketNumber') {
+    if (key === 'project') {
+      // Allow project updates
+      ticket.project = req.body.project;
+    } else if (key !== 'reporter' && key !== 'ticketNumber') {
       ticket[key] = req.body[key];
     }
   });
@@ -307,6 +346,7 @@ const updateTicket = asyncHandler(async (req, res) => {
   if (Object.keys(changes).length > 0) {
     ticket.history.push({
       user: req.user._id,
+      action : "updated",
       changes,
       timestamp: Date.now(),
     });
@@ -321,7 +361,7 @@ const updateTicket = asyncHandler(async (req, res) => {
     entityType: 'ticket',
     entityId: ticket._id,
     project: ticket.project,
-    team: project.team,
+    team: targetProject.team,
     details: { title: ticket.title, ticketNumber: ticket.ticketNumber, changes },
   });
 
@@ -687,9 +727,7 @@ const removeWatcher = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const assignTicket = asyncHandler(async (req, res) => {
-  console.log("Inside assign ticket controller",req.body)
   const { assigneeId } = req.body;
-  console.log("User ID to assign:", assigneeId)
   const ticket = await Ticket.findById(req.params.id);
 
   if (!ticket) {

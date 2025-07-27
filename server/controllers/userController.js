@@ -11,12 +11,24 @@ const Activity = require('../models/activityModel');
 
 
 const searchUsers = asyncHandler(async (req, res) => {
-  const { name, project } = req.query;
+  const { name, project, startsWith } = req.query;
   if (!name) {
     return res.status(400).json({ message: 'Name query is required' });
   }
+  
+  // Create regex based on startsWith parameter
+  let nameRegex;
+  if (startsWith === 'true') {
+    // If startsWith is true, match names that start with the query
+    nameRegex = new RegExp(`^${name}`, 'i');
+  } else {
+    // Otherwise, match names that contain the query anywhere
+    nameRegex = new RegExp(name, 'i');
+  }
+  
   // Optionally filter by project membership
-  let filter = { name: { $regex: name, $options: 'i' } };
+  let filter = { name: nameRegex };
+  
   if (project) {
     // Only users who are members of the project
     const Project = require('../models/projectModel');
@@ -26,7 +38,13 @@ const searchUsers = asyncHandler(async (req, res) => {
       filter._id = { $in: memberIds };
     }
   }
-  const users = await User.find(filter).select('name email avatar');
+  
+  const users = await User.find(filter)
+    .select('name email avatar')
+    .sort({ name: 1 }) // Sort results alphabetically by name
+    .limit(10); // Limit results for better performance
+  
+  console.log(`User search: ${name}, startsWith: ${startsWith}, found: ${users.length} users`);
   res.json(users);
 });
 

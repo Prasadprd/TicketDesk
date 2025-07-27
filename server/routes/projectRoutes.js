@@ -81,7 +81,7 @@ const ticketPrioritiesValidationRules = [
 // Routes
 router
   .route('/')
-  .post(protect, authorize('user', ['admin', 'developer']), validate(projectValidationRules), createProject)
+  .post(protect, authorize(roles = ['admin', 'developer']), validate(projectValidationRules), createProject)
   .get(protect, getProjects);
 
 router

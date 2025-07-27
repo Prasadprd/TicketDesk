@@ -8,6 +8,7 @@ import { AuthContext } from './context/AuthContext';
 // Lazy loaded page components
 const Projects = React.lazy(() => import('./pages/Projects'));
 const Tickets = React.lazy(() => import('./pages/Tickets'));
+const TicketDetail = React.lazy(() => import('./pages/TicketDetail'));
 const Teams = React.lazy(() => import('./pages/Teams'));
 const Users = React.lazy(() => import('./pages/Users'));
 const Notifications = React.lazy(() => import('./pages/Notifications'));
@@ -65,9 +66,14 @@ function App() {
                 <Projects />
               </ProtectedRoute>
             } />
-            <Route path="/tickets/*" element={
+            <Route path="/tickets" element={
               <ProtectedRoute>
                 <Tickets />
+              </ProtectedRoute>
+            } />
+            <Route path="/tickets/:id" element={
+              <ProtectedRoute>
+                <TicketDetail />
               </ProtectedRoute>
             } />
             {/* <Route path="/teams/*" element={

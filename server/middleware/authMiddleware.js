@@ -59,7 +59,7 @@ const authorize = (roles = []) => {
       res.status(401);
       throw new Error('Not authenticated');
     }
-
+    console.log("from authMiddleware",req.user)
     if (roles.length && !roles.includes(req.user.role)) {
       res.status(403);
       throw new Error(`Not authorized as ${req.user.role}`);
